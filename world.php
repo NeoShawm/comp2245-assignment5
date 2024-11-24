@@ -1,17 +1,36 @@
-<?php
+<?php 
 $host = 'localhost';
 $username = 'lab5_user';
-$password = '';
+$password = 'password123';
 $dbname = 'world';
 
+// Create a connection to the database using PDO
 $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
-$stmt = $conn->query("SELECT * FROM countries");
 
+// Capture the 'country' parameter from the URL (e.g., http://localhost/?country=USA)
+$country = $_GET['country'] ?? ''; // Use the GET parameter, or an empty string if not set
+
+// Modify the query to include the search filter if 'country' is provided
+if ($country) {
+    // Use prepared statements to prevent SQL injection
+    $query = "SELECT * FROM countries WHERE name LIKE :country";
+    $stmt = $conn->prepare($query);
+    $stmt->bindValue(':country', "%$country%", PDO::PARAM_STR); // Bind the country value
+} else {
+    // Default query if no 'country' parameter is passed
+    $query = "SELECT * FROM countries";
+    $stmt = $conn->query($query);
+}
+
+// Execute the query
+$stmt->execute();
+
+// Fetch all results as an associative array
 $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 ?>
+
 <ul>
 <?php foreach ($results as $row): ?>
-  <li><?= $row['name'] . ' is ruled by ' . $row['head_of_state']; ?></li>
+  <li><?= htmlspecialchars($row['name']) . ' is ruled by ' . htmlspecialchars($row['head_of_state']); ?></li>
 <?php endforeach; ?>
 </ul>
